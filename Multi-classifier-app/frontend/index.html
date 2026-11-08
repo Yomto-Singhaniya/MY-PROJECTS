@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050914">
+  <title>SkyScan — Multi-Class Image Recognition</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --ink: #edf5ff;
+      --muted: #a4b4c9;
+      --teal: #4de2d0;
+      --blue: #5798ff;
+      --violet: #9c7bff;
+      --danger: #ff7889;
+      --glass: rgba(11, 20, 38, .72);
+      --line: rgba(190, 218, 255, .18);
+      --shadow: 0 24px 70px rgba(0, 0, 0, .28), 0 0 35px rgba(56, 156, 210, .08);
+    }
+    * { box-sizing: border-box; }
+    html { min-width: 360px; min-height: 100%; background: #050914; }
+    body {
+      position: relative;
+      isolation: isolate;
+      min-width: 360px;
+      min-height: 100vh;
+      margin: 0;
+      padding: 46px 18px 62px;
+      color: var(--ink);
+      background: transparent;
+      overflow-x: hidden;
+    }
+
+    /* Scene canvas: sits behind the interface and never intercepts input. */
+    #scene-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    body::before {
+      position: fixed;
+      z-index: -2;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 40%, rgba(12, 35, 62, .32), transparent 60%),
+        linear-gradient(145deg, #07101f, #03050b 72%);
+      content: "";
+      pointer-events: none;
+    }
+    main { position: relative; z-index: 1; width: min(760px, 100%); margin: 0 auto; }
+    header { margin: 0 0 25px; text-align: center; }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--teal);
+      font-size: .73rem;
+      font-weight: 800;
+      letter-spacing: .19em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(2.35rem, 8vw, 4rem); letter-spacing: -.065em; line-height: 1.05; }
+    header p:last-child { margin: 12px 0 0; color: #b7c8df; font-size: clamp(.95rem, 3vw, 1.08rem); letter-spacing: .025em; }
+
+    /* Glass interface surfaces. */
+    .card {
+      margin-top: 16px;
+      padding: clamp(18px, 4vw, 29px);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--glass);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, .05);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+    }
+    .classifier-card {
+      transform: perspective(1000px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+      transform-style: preserve-3d;
+      transition: transform .24s ease-out;
+      will-change: transform;
+    }
+    label { display: block; margin-bottom: 8px; color: #dceaff; font-size: .88rem; font-weight: 700; }
+    .api-row { display: flex; gap: 10px; }
+    input[type="url"] {
+      width: 100%;
+      min-width: 0;
+      padding: 12px 14px;
+      border: 1px solid rgba(181, 207, 240, .24);
+      border-radius: 11px;
+      color: var(--ink);
+      background: rgba(3, 10, 21, .64);
+      font: inherit;
+    }
+    input[type="url"]::placeholder { color: #8598b2; }
+    input:focus-visible, button:focus-visible, .drop-zone:focus-visible, summary:focus-visible {
+      outline: 3px solid rgba(77, 226, 208, .75);
+      outline-offset: 3px;
+    }
+    button {
+      min-height: 45px;
+      padding: 0 18px;
+      border: 1px solid rgba(194, 242, 255, .24);
+      border-radius: 11px;
+      color: #f5ffff;
+      background: linear-gradient(110deg, #0ba997, #2879e9 72%, #6556dc);
+      box-shadow: 0 7px 20px rgba(27, 154, 204, .18);
+      font: inherit;
+      font-weight: 760;
+      cursor: pointer;
+      transition: filter .18s, transform .18s, box-shadow .18s;
+    }
+    button:hover:not(:disabled) {
+      filter: brightness(1.16);
+      box-shadow: 0 9px 27px rgba(55, 169, 236, .35);
+      transform: translateY(-2px);
+    }
+    button:active:not(:disabled) { transform: translateY(1px) scale(.99); }
+    button:disabled { cursor: wait; opacity: .7; }
+    .secondary {
+      flex: 0 0 auto;
+      color: #d6f9ff;
+      background: linear-gradient(110deg, rgba(14, 111, 130, .72), rgba(39, 78, 151, .78));
+    }
+    .connection-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+    .badge { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: .85rem; }
+    .badge::before { width: 8px; height: 8px; border-radius: 50%; background: #8290a4; content: ""; }
+    .badge.connected { color: #91f0ca; }
+    .badge.connected::before { background: #53e59c; box-shadow: 0 0 10px rgba(83, 229, 156, .72); }
+    .badge.failed { color: var(--danger); }
+    .badge.failed::before { background: var(--danger); box-shadow: 0 0 10px rgba(255, 120, 137, .65); }
+    .footnote { margin: 0; color: #91a4be; font-size: .78rem; line-height: 1.55; }
+    .drop-zone {
+      display: grid;
+      min-height: 210px;
+      place-items: center;
+      overflow: hidden;
+      margin-top: 21px;
+      padding: 22px;
+      border: 1px dashed rgba(102, 213, 230, .48);
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(11, 49, 70, .5), rgba(20, 24, 55, .4));
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+    .drop-zone:hover, .drop-zone.dragging {
+      border-color: var(--teal);
+      background: linear-gradient(135deg, rgba(12, 89, 99, .42), rgba(38, 45, 99, .42));
+      box-shadow: inset 0 0 28px rgba(77, 226, 208, .08);
+    }
+    .drop-zone img { display: block; max-width: 100%; max-height: 280px; border-radius: 10px; object-fit: contain; }
+    .drop-content { color: #afc1d9; }
+    .drop-content strong { display: block; margin-bottom: 6px; color: var(--ink); font-size: 1rem; }
+    .drop-content span { font-size: .86rem; }
+    #file { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+    .file-name { margin: 10px 0 0; color: #9aacc4; font-size: .84rem; overflow-wrap: anywhere; }
+    .predict-row { display: flex; min-height: 46px; align-items: center; gap: 13px; margin-top: 17px; }
+    #predict-button { min-width: 150px; }
+    .spinner {
+      display: none;
+      width: 19px;
+      height: 19px;
+      border: 2px solid rgba(141, 212, 235, .3);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+    }
+    .spinner.visible { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .request-status { color: #a8e9e5; font-size: .88rem; font-weight: 700; }
+    .request-status[hidden] { display: none; }
+    .message { margin: 13px 0 0; color: var(--danger); font-size: .9rem; line-height: 1.5; }
+    .result-card[hidden], .message[hidden], #raw-section[hidden] { display: none; }
+    .result-card { margin-top: 16px; }
+    .result-heading { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+    h2 { margin: 0; color: #dcecff; font-size: 1.12rem; letter-spacing: -.025em; }
+    .result-name { margin: 8px 0 0; color: #fff; font-size: clamp(1.45rem, 5vw, 2rem); font-weight: 800; overflow-wrap: anywhere; }
+    .confidence { flex: 0 0 auto; color: #93f6e5; font-size: 1.08rem; font-weight: 800; }
+    .bar-track { height: 9px; overflow: hidden; border-radius: 99px; background: rgba(167, 193, 225, .13); }
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #41dfc8, #478bff 60%, #9a72ff);
+      box-shadow: 0 0 14px rgba(61, 190, 255, .5);
+    }
+    .main-bar { margin: 13px 0 23px; }
+    .top-list { display: grid; gap: 15px; margin: 15px 0 0; padding: 0; list-style: none; }
+    .top-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 12px; color: #e5efff; font-size: .88rem; }
+    .top-item .bar-track { grid-column: 1 / -1; height: 7px; }
+    .top-label { font-weight: 650; overflow-wrap: anywhere; }
+    .top-value { color: #a5b6cd; font-variant-numeric: tabular-nums; }
+    details { margin-top: 22px; border-top: 1px solid rgba(190, 218, 255, .14); padding-top: 16px; }
+    summary { width: fit-content; color: #86e9e0; font-size: .88rem; font-weight: 700; cursor: pointer; }
+    pre {
+      max-height: 260px;
+      overflow: auto;
+      margin: 13px 0 0;
+      padding: 14px;
+      border: 1px solid rgba(176, 210, 241, .13);
+      border-radius: 12px;
+      color: #cee3fc;
+      background: rgba(2, 8, 17, .72);
+      font-size: .8rem;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 540px) {
+      body { padding: 29px 13px 42px; }
+      .api-row { flex-direction: column; }
+      .secondary { width: 100%; }
+      .drop-zone { min-height: 180px; }
+      .result-heading { flex-wrap: wrap; }
+    }
+    @media (hover: none), (prefers-reduced-motion: reduce) {
+      .classifier-card { transform: none !important; transition: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene-canvas" aria-hidden="true"></canvas>
+  <main>
+    <header>
+      <p class="eyebrow">SkyScan</p>
+      <h1>SkyScan</h1>
+      <p>Multi-Class Image Recognition</p>
+    </header>
+
+    <section class="card classifier-card" id="classifier-card" aria-label="Image classifier">
+      <label for="api-url">API Base URL</label>
+      <div class="api-row">
+        <input id="api-url" type="url" inputmode="url" value="http://127.0.0.1:8000" autocomplete="url" aria-describedby="api-help">
+        <button class="secondary" id="test-button" type="button">Test Connection</button>
+      </div>
+      <div class="connection-row">
+        <span class="badge" id="connection-badge" role="status">Checking…</span>
+        <span class="footnote" id="api-help">Use a local, tunnel, or deployed API address.</span>
+      </div>
+
+      <label class="drop-zone" id="drop-zone" for="file" tabindex="0" aria-label="Choose or drop an image to classify">
+        <input id="file" type="file" accept="image/*">
+        <span class="drop-content" id="drop-content">
+          <strong>Drop an image to classify</strong>
+          <span>or click to choose a file</span>
+        </span>
+      </label>
+      <p class="file-name" id="file-name">No image selected</p>
+
+      <div class="predict-row">
+        <button id="predict-button" type="button">Classify</button>
+        <span class="spinner" id="spinner" aria-label="Loading"></span>
+        <span class="request-status" id="request-status" aria-live="polite" hidden></span>
+      </div>
+      <p class="message" id="error-message" role="alert" hidden></p>
+    </section>
+
+    <section class="card result-card" id="result-card" aria-live="polite" hidden>
+      <div class="result-heading">
+        <div>
+          <h2>Best match</h2>
+          <p class="result-name" id="result-name"></p>
+        </div>
+        <span class="confidence" id="confidence"></span>
+      </div>
+      <div class="bar-track main-bar" aria-hidden="true"><div class="bar-fill" id="main-bar"></div></div>
+      <h2>Top predictions</h2>
+      <ol class="top-list" id="top-list"></ol>
+      <details id="raw-section">
+        <summary>Show raw JSON</summary>
+        <pre id="out"></pre>
+      </details>
+    </section>
+  </main>
+
+  <!-- Three.js r149 classic UMD build is bundled locally for file:// and offline use. -->
+  <script src="vendor/three.min.js"></script>
+  <script>
+    /* 3D BACKGROUND: WebGL scene, parallax, reduced-motion and fallback handling. */
+    (() => {
+      const canvas = document.getElementById("scene-canvas");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const touchDevice = window.matchMedia("(hover: none)").matches;
+      let renderFrame = () => {};
+      let updateSceneState = () => {};
+
+      try {
+        if (!window.THREE) throw new Error("Local Three.js library could not be loaded.");
+        const THREE = window.THREE;
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x030711, 0);
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050a16, 0.035);
+        const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 9);
+        scene.add(new THREE.AmbientLight(0x526c9c, 1.35));
+        const keyLight = new THREE.PointLight(0x43cde2, 2.4, 25);
+        keyLight.position.set(3, 3, 5);
+        scene.add(keyLight);
+        const violetLight = new THREE.PointLight(0x704dff, 1.6, 22);
+        violetLight.position.set(-4, 0, 2);
+        scene.add(violetLight);
+
+        /* Central wireframe core with a softly illuminated inner sphere. */
+        const core = new THREE.Group();
+        scene.add(core);
+        const coreMaterial = new THREE.MeshStandardMaterial({
+          color: 0x4de2d0, emissive: 0x17a99e, emissiveIntensity: 0.72,
+          wireframe: true, metalness: 0.55, roughness: 0.26
+        });
+        const shell = new THREE.Mesh(new THREE.IcosahedronGeometry(1.45, 2), coreMaterial);
+        core.add(shell);
+        const innerMaterial = new THREE.MeshStandardMaterial({
+          color: 0x092a43, emissive: 0x168fd2, emissiveIntensity: 1.05,
+          metalness: 0.25, roughness: 0.32
+        });
+        const inner = new THREE.Mesh(new THREE.SphereGeometry(.78, 40, 32), innerMaterial);
+        core.add(inner);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+          color: 0x3cbbe4, transparent: true, opacity: .075, side: THREE.BackSide
+        });
+        core.add(new THREE.Mesh(new THREE.SphereGeometry(1.12, 32, 24), glowMaterial));
+
+        /* Tilted orbital rings, each with a small emissive satellite. */
+        const orbitRings = [];
+        const orbitSpecs = [
+          { radius: 2.05, tilt: [.32, .1, .2], speed: .18, color: 0x50e4d1 },
+          { radius: 2.42, tilt: [1.08, .42, -.28], speed: -.12, color: 0x5798ff },
+          { radius: 2.75, tilt: [.68, -.65, .48], speed: .075, color: 0x9878ff }
+        ];
+        for (const spec of orbitSpecs) {
+          const group = new THREE.Group();
+          group.rotation.set(...spec.tilt);
+          const material = new THREE.MeshStandardMaterial({
+            color: spec.color, emissive: spec.color, emissiveIntensity: .6,
+            metalness: .35, roughness: .38, transparent: true, opacity: .72
+          });
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(spec.radius, .009, 6, 180), material);
+          group.add(ring);
+          const nodeMaterial = new THREE.MeshBasicMaterial({ color: spec.color });
+          const node = new THREE.Mesh(new THREE.SphereGeometry(.075, 14, 12), nodeMaterial);
+          group.add(node);
+          scene.add(group);
+          orbitRings.push({ group, material, node, radius: spec.radius, angle: Math.random() * Math.PI * 2, speed: spec.speed });
+        }
+
+        /* Deep-space particles use a single point draw call. */
+        const particleCount = 1500;
+        const particlePositions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+          particlePositions[i * 3] = (Math.random() - .5) * 32;
+          particlePositions[i * 3 + 1] = (Math.random() - .5) * 20;
+          particlePositions[i * 3 + 2] = (Math.random() - .5) * 30 - 3;
+        }
+        const particleGeometry = new THREE.BufferGeometry();
+        particleGeometry.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+        const particleMaterial = new THREE.PointsMaterial({
+          color: 0x72c9e8, size: .025, transparent: true, opacity: .68,
+          blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const particles = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(particles);
+
+        /* A dim perspective grid anchors the bottom of the scene. */
+        const grid = new THREE.GridHelper(40, 48, 0x185478, 0x10213e);
+        grid.position.y = -3.2;
+        grid.material.transparent = true;
+        grid.material.opacity = .24;
+        scene.add(grid);
+
+        let targetPointerX = 0;
+        let targetPointerY = 0;
+        let cameraTargetX = 0;
+        let cameraTargetY = 0;
+        let state = "idle";
+        let currentSceneColor = new THREE.Color(0x4de2d0);
+        let targetSceneColor = currentSceneColor.clone();
+        let ringGlow = .42;
+        let targetRingGlow = .42;
+        let errorUntil = 0;
+        let clock = new THREE.Clock();
+        let animationId = 0;
+
+        function classColor(className) {
+          const name = String(className || "").toLowerCase();
+          if (/\b(plants?|flowers?|trees?|leaves|herbs?|crops?|fruits?|vegetables?)\b/.test(name)) return new THREE.Color(0x64e894);
+          if (/\b(humans?|persons?|people|men|women|children|faces)\b/.test(name)) return new THREE.Color(0x5798ff);
+          if (/\b(animals?|birds?|cats?|dogs?|horses?|fish|insects?|butterflies)\b/.test(name)) return new THREE.Color(0xff9a55);
+          if (/\b(vehicles?|cars?|trucks?|buses|trains?|aircraft|airplanes?|boats?|motorcycles?)\b/.test(name)) return new THREE.Color(0xa477ff);
+          return new THREE.Color(0x4de2d0);
+        }
+
+        updateSceneState = (nextState, className, confidence) => {
+          state = nextState || "idle";
+          if (state === "classifying") {
+            targetRingGlow = .9;
+          } else if (state === "result") {
+            targetSceneColor = classColor(className);
+            targetRingGlow = .22 + Math.max(0, Math.min(1, Number(confidence) || 0)) * 1.05;
+          } else if (state === "error") {
+            errorUntil = performance.now() + 850;
+          } else if (state === "idle") {
+            targetSceneColor = new THREE.Color(0x4de2d0);
+            targetRingGlow = .42;
+          }
+          if (reducedMotion) {
+            renderFrame(performance.now());
+          }
+        };
+
+        renderFrame = (now) => {
+          const elapsed = Math.min(clock.getDelta(), .05);
+          const time = now * .001;
+          currentSceneColor.lerp(targetSceneColor, .025);
+          ringGlow += (targetRingGlow - ringGlow) * .04;
+          const isClassifying = state === "classifying";
+          const speed = reducedMotion ? 0 : (isClassifying ? 1.65 : .26);
+          const pulse = isClassifying && !reducedMotion ? 1 + Math.sin(time * 5.2) * .24 : 1;
+          const flashError = performance.now() < errorUntil;
+          const materialColor = flashError ? new THREE.Color(0xff384f) : currentSceneColor;
+
+          shell.rotation.x += elapsed * speed * .42;
+          shell.rotation.y += elapsed * speed * .62;
+          inner.rotation.y -= elapsed * speed * .28;
+          core.rotation.y += elapsed * speed * .12;
+          innerMaterial.emissiveIntensity = (flashError ? 2.5 : 1.05) * pulse;
+          coreMaterial.emissiveIntensity = (flashError ? 2.2 : .72) * pulse;
+          coreMaterial.color.copy(materialColor);
+          coreMaterial.emissive.copy(materialColor);
+          glowMaterial.color.copy(materialColor);
+          glowMaterial.opacity = (flashError ? .2 : .075) * pulse;
+          for (let i = 0; i < orbitRings.length; i++) {
+            const orbit = orbitRings[i];
+            orbit.group.rotation.y += elapsed * orbit.speed * (isClassifying ? 2.2 : 1);
+            orbit.angle += elapsed * orbit.speed * 1.6 * (isClassifying ? 1.8 : 1);
+            orbit.node.position.set(Math.cos(orbit.angle) * orbit.radius, Math.sin(orbit.angle) * orbit.radius, 0);
+            orbit.material.color.copy(materialColor);
+            orbit.material.emissive.copy(materialColor);
+            orbit.material.emissiveIntensity = ringGlow * (flashError ? 2.5 : 1);
+          }
+          cameraTargetX += (targetPointerX - cameraTargetX) * .035;
+          cameraTargetY += (targetPointerY - cameraTargetY) * .035;
+          if (touchDevice && !reducedMotion) {
+            cameraTargetX = Math.sin(time * .12) * .38;
+            cameraTargetY = Math.cos(time * .1) * .18;
+          }
+          camera.position.x += (cameraTargetX - camera.position.x) * .035;
+          camera.position.y += (-cameraTargetY - camera.position.y) * .035;
+          camera.lookAt(0, 0, 0);
+
+          const positions = particleGeometry.attributes.position.array;
+          if (!reducedMotion) {
+            for (let i = 2; i < positions.length; i += 3) {
+              positions[i] += elapsed * .17;
+              if (positions[i] > 12) positions[i] = -18;
+            }
+            particleGeometry.attributes.position.needsUpdate = true;
+            particles.rotation.y += elapsed * .006;
+          }
+          renderer.render(scene, camera);
+        };
+
+        function animate(now) {
+          renderFrame(now);
+          animationId = window.requestAnimationFrame(animate);
+        }
+        function onResize() {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderFrame(performance.now());
+        }
+        window.addEventListener("resize", onResize);
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) {
+            window.cancelAnimationFrame(animationId);
+          } else if (!reducedMotion) {
+            clock = new THREE.Clock();
+            animationId = window.requestAnimationFrame(animate);
+          }
+        });
+        window.addEventListener("pointermove", event => {
+          if (touchDevice || reducedMotion) return;
+          targetPointerX = (event.clientX / window.innerWidth - .5) * .72;
+          targetPointerY = (event.clientY / window.innerHeight - .5) * .42;
+        }, { passive: true });
+        window.setSceneState = (sceneState, className, confidence) => updateSceneState(sceneState, className, confidence);
+        renderFrame(performance.now());
+        if (!reducedMotion && !document.hidden) animationId = window.requestAnimationFrame(animate);
+      } catch (error) {
+        canvas.style.display = "none";
+        document.documentElement.classList.add("scene-fallback");
+        console.warn("SkyScan 3D background is unavailable; using the CSS gradient.", error);
+        window.setSceneState = () => {};
+      }
+    })();
+
+    /* INTERFACE: API health, local persistence, preview, prediction and feedback. */
+    const urlInput = document.getElementById("api-url");
+    const fileInput = document.getElementById("file");
+    const dropZone = document.getElementById("drop-zone");
+    const dropContent = document.getElementById("drop-content");
+    const fileName = document.getElementById("file-name");
+    const predictButton = document.getElementById("predict-button");
+    const errorMessage = document.getElementById("error-message");
+    const connectionBadge = document.getElementById("connection-badge");
+    const resultCard = document.getElementById("result-card");
+    const spinner = document.getElementById("spinner");
+    const requestStatus = document.getElementById("request-status");
+    let previewUrl = null;
+    let healthTimer = 0;
+    let statusTimer = 0;
+    let healthGeneration = 0;
+    let predictionGeneration = 0;
+    let imageGeneration = 0;
+
+    try {
+      urlInput.value = localStorage.getItem("skyScanApiUrl") || urlInput.value;
+    } catch (error) {
+      console.warn("SkyScan could not read the saved API URL.", error);
+    }
+
+    function getBaseUrl() {
+      const value = urlInput.value.trim();
+      if (!value) throw new Error("Enter an API Base URL first.");
+      try {
+        const parsed = new URL(value);
+        if (!["http:", "https:"].includes(parsed.protocol)) throw new Error();
+      } catch {
+        throw new Error("Enter a valid API URL starting with http:// or https://.");
+      }
+      return value.replace(/\/+$/, "");
+    }
+
+    function setBadge(text, state = "") {
+      connectionBadge.textContent = text;
+      connectionBadge.className = `badge${state ? ` ${state}` : ""}`;
+    }
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.hidden = false;
+      window.setSceneState("error");
+    }
+
+    function clearError() {
+      errorMessage.textContent = "";
+      errorMessage.hidden = true;
+    }
+
+    function clearRequestStatus() {
+      window.clearTimeout(statusTimer);
+      requestStatus.textContent = "";
+      requestStatus.hidden = true;
+    }
+
+    async function readResponse(response) {
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(`Server returned an unreadable response (HTTP ${response.status}).`);
+      }
+      if (!response.ok) {
+        const detail = data.detail || data.message || `HTTP ${response.status}`;
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      return data;
+    }
+
+    async function checkConnection() {
+      const checkId = ++healthGeneration;
+      setBadge("Checking…");
+      try {
+        const response = await fetch(`${getBaseUrl()}/health`, {
+          headers: { "ngrok-skip-browser-warning": "true" }
+        });
+        const data = await readResponse(response);
+        if (checkId !== healthGeneration) return;
+        const isHealthy = data.status === "ok" || data.ok === true;
+        if (!isHealthy) {
+          throw new Error("API health check did not report a healthy status.");
+        }
+        if (typeof data.model_loaded === "boolean") {
+          setBadge(data.model_loaded ? "Connected · model ready" : "Connected · model missing", "connected");
+        } else {
+          setBadge("Connected · model status unknown", "connected");
+        }
+      } catch (error) {
+        if (checkId !== healthGeneration) return;
+        setBadge("Not reachable", "failed");
+        showError(error instanceof TypeError
+          ? "Could not reach the server. Check the API URL and that the backend is running."
+          : error.message || "Could not reach the API.");
+      }
+    }
+
+    document.getElementById("test-button").addEventListener("click", checkConnection);
+    urlInput.addEventListener("input", () => {
+      healthGeneration++;
+      try {
+        localStorage.setItem("skyScanApiUrl", urlInput.value.trim());
+      } catch (error) {
+        console.warn("SkyScan could not save the API URL.", error);
+      }
+      clearError();
+      setBadge("Checking…");
+      window.clearTimeout(healthTimer);
+      healthTimer = window.setTimeout(checkConnection, 400);
+    });
+
+    function setFile(file) {
+      if (!file) return;
+      imageGeneration++;
+      predictionGeneration++;
+      predictButton.disabled = false;
+      spinner.classList.remove("visible");
+      clearRequestStatus();
+      clearError();
+      resultCard.hidden = true;
+      window.setSceneState("idle");
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = URL.createObjectURL(file);
+      const image = document.createElement("img");
+      image.src = previewUrl;
+      image.alt = "Selected image preview";
+      dropContent.replaceChildren(image);
+      fileName.textContent = `${file.name} · ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
+    dropZone.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+    for (const eventName of ["dragenter", "dragover"]) {
+      dropZone.addEventListener(eventName, event => {
+        event.preventDefault();
+        dropZone.classList.add("dragging");
+      });
+    }
+    for (const eventName of ["dragleave", "drop"]) {
+      dropZone.addEventListener(eventName, event => {
+        event.preventDefault();
+        dropZone.classList.remove("dragging");
+      });
+    }
+    dropZone.addEventListener("drop", event => {
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        fileInput.files = transfer.files;
+        setFile(file);
+      }
+    });
+
+    function percent(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? Math.max(0, Math.min(100, number * 100)) : 0;
+    }
+
+    function renderResult(data) {
+      if (typeof data.predicted_class !== "string" || !Array.isArray(data.top3)) {
+        throw new Error("The server response did not contain a prediction and top-3 results.");
+      }
+      const bestPercent = percent(data.confidence);
+      document.getElementById("result-name").textContent = data.predicted_class;
+      document.getElementById("confidence").textContent = `${bestPercent.toFixed(1)}%`;
+      document.getElementById("main-bar").style.width = `${bestPercent}%`;
+      const list = document.getElementById("top-list");
+      list.replaceChildren();
+      data.top3.slice(0, 3).forEach(item => {
+        const row = document.createElement("li");
+        row.className = "top-item";
+        const name = document.createElement("span");
+        name.className = "top-label";
+        name.textContent = item.class;
+        const value = document.createElement("span");
+        value.className = "top-value";
+        value.textContent = `${percent(item.confidence).toFixed(1)}%`;
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = `${percent(item.confidence)}%`;
+        track.append(fill);
+        row.append(name, value, track);
+        list.append(row);
+      });
+      document.getElementById("out").textContent = JSON.stringify(data, null, 2);
+      resultCard.hidden = false;
+    }
+
+    async function send() {
+      const file = fileInput.files[0];
+      clearRequestStatus();
+      if (!file) {
+        resultCard.hidden = true;
+        showError("Choose or drop an image before classifying.");
+        return;
+      }
+      const currentRequest = ++predictionGeneration;
+      const selectedImage = imageGeneration;
+      clearError();
+      resultCard.hidden = true;
+      predictButton.disabled = true;
+      spinner.classList.add("visible");
+      requestStatus.textContent = "Analyzing image…";
+      requestStatus.hidden = false;
+      window.setSceneState("classifying");
+      let succeeded = false;
+      let result;
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        const response = await fetch(`${getBaseUrl()}/predict`, {
+          method: "POST",
+          headers: { "ngrok-skip-browser-warning": "true" },
+          body: form
+        });
+        result = await readResponse(response);
+        if (currentRequest !== predictionGeneration || selectedImage !== imageGeneration) return;
+        renderResult(result);
+        succeeded = true;
+        window.setSceneState("result", result.predicted_class, result.confidence);
+      } catch (error) {
+        if (currentRequest !== predictionGeneration || selectedImage !== imageGeneration) return;
+        showError(error instanceof TypeError
+          ? "Could not reach the server. Check the API URL and that the backend is running."
+          : error.message || "The server could not classify this image.");
+      } finally {
+        if (currentRequest === predictionGeneration) {
+          spinner.classList.remove("visible");
+          requestStatus.textContent = "";
+          requestStatus.hidden = true;
+          predictButton.disabled = false;
+        }
+      }
+      if (succeeded && currentRequest === predictionGeneration && selectedImage === imageGeneration) {
+        requestStatus.textContent = "Done";
+        requestStatus.hidden = false;
+        statusTimer = window.setTimeout(() => {
+          if (currentRequest === predictionGeneration && selectedImage === imageGeneration) clearRequestStatus();
+        }, 2000);
+      }
+    }
+
+    predictButton.addEventListener("click", send);
+
+    /* Optional pointer tilt is intentionally disabled for touch and reduced motion. */
+    const classifierCard = document.getElementById("classifier-card");
+    if (!window.matchMedia("(hover: none)").matches &&
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      classifierCard.addEventListener("pointermove", event => {
+        const bounds = classifierCard.getBoundingClientRect();
+        const x = (event.clientX - bounds.left) / bounds.width - .5;
+        const y = (event.clientY - bounds.top) / bounds.height - .5;
+        classifierCard.style.setProperty("--tilt-x", `${-y * 12}deg`);
+        classifierCard.style.setProperty("--tilt-y", `${x * 12}deg`);
+      });
+      classifierCard.addEventListener("pointerleave", () => {
+        classifierCard.style.setProperty("--tilt-x", "0deg");
+        classifierCard.style.setProperty("--tilt-y", "0deg");
+      });
+    }
+
+    checkConnection();
+  </script>
+</body>
+</html>

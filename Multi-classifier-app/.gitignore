@@ -1,0 +1,9 @@
+backend/.venv/
+backend/venv/
+__pycache__/
+*.py[cod]
+.env
+.venv/
+venv/
+backend/image_classifier.keras
+backend/class_names.json
