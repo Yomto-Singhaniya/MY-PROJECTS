@@ -1,0 +1,911 @@
+<!doctype html>
+<!--
+  DEPLOY
+  - Netlify Drop: drag this file (or a folder containing it) onto https://app.netlify.com/drop.
+  - Vercel: import the repository and select the Other framework preset; no build command or output directory is needed.
+  - GitHub Pages: publish this file from the repository root (Settings > Pages).
+  - Cloudflare Pages: connect the repository with no build command and "." as the output directory.
+  - Any static host: upload index.html as the site entry point.
+
+  EDITING
+  - Add or change the two-line wishes in the QUOTES array below; each entry must contain exactly two strings.
+  - Add ?to=Name to the URL to personalize the headline, for example ?to=Anaya.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#160c30">
+  <meta name="description" content="A little light, joy, and warmth for your Diwali. Share a festive wish with the people you love.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Happy Diwali">
+  <meta property="og:description" content="Wishing you light, love and prosperity this Diwali.">
+  <meta property="og:url" content="https://example.com/diwali">
+  <meta property="og:image" content="https://example.com/diwali-preview.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Happy Diwali">
+  <meta name="twitter:description" content="Wishing you light, love and prosperity this Diwali.">
+  <meta name="twitter:image" content="https://example.com/diwali-preview.jpg">
+  <title>Happy Diwali — Light, Love &amp; Prosperity</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='84'%3E%F0%9F%AA%94%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "DM Sans", "Segoe UI", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      --gold: #ffd98a;
+      --cream: #fff8eb;
+      --muted: #e6d9ed;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: #160c30;
+      color: var(--cream);
+      isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #scene, #fallback-sky {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    #scene canvas { display: block; width: 100%; height: 100%; }
+
+    #fallback-sky {
+      display: none;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 105%, rgba(255, 116, 49, .68), transparent 43%),
+        radial-gradient(ellipse at 15% 65%, rgba(84, 37, 132, .62), transparent 50%),
+        linear-gradient(155deg, #12102f 4%, #291247 55%, #5c2455 100%);
+    }
+
+    #fallback-sky.active { display: block; }
+
+    .fallback-dot {
+      position: absolute;
+      display: block;
+      width: var(--dot-size);
+      height: var(--dot-size);
+      left: var(--dot-x);
+      top: var(--dot-y);
+      border-radius: 50%;
+      background: #ffd487;
+      box-shadow: 0 0 12px 3px rgba(255, 178, 83, .55);
+      opacity: .25;
+      animation: twinkle var(--dot-speed) ease-in-out var(--dot-delay) infinite alternate;
+    }
+
+    @keyframes twinkle { to { opacity: .95; transform: scale(1.7); } }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(13, 8, 29, .26), transparent 35%, transparent 65%, rgba(13, 8, 29, .26)),
+        radial-gradient(ellipse at center, transparent 30%, rgba(10, 5, 23, .42) 100%);
+    }
+
+    main {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding:
+        max(1.25rem, env(safe-area-inset-top))
+        max(1.25rem, env(safe-area-inset-right))
+        max(1.25rem, env(safe-area-inset-bottom))
+        max(1.25rem, env(safe-area-inset-left));
+    }
+
+    .wish-card {
+      width: min(100%, 41rem);
+      padding: clamp(2.35rem, 7vw, 4.65rem) clamp(1.4rem, 6vw, 4.25rem) clamp(1.8rem, 5vw, 3.15rem);
+      text-align: center;
+      border: 1px solid rgba(255, 238, 210, .22);
+      border-radius: clamp(1.5rem, 4vw, 2.4rem);
+      background: linear-gradient(145deg, rgba(45, 28, 68, .68), rgba(31, 18, 50, .58));
+      box-shadow:
+        0 24px 90px rgba(8, 3, 23, .38),
+        inset 0 1px 0 rgba(255, 255, 255, .13);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+      animation: card-arrive 1s cubic-bezier(.2, .75, .25, 1) both;
+    }
+
+    @keyframes card-arrive {
+      from { opacity: 0; transform: translateY(15px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .lamp-accent {
+      display: block;
+      margin-bottom: clamp(.5rem, 2vw, 1rem);
+      font-size: clamp(1.65rem, 5vw, 2.2rem);
+      filter: drop-shadow(0 0 13px rgba(255, 180, 71, .58));
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(2.65rem, 10.2vw, 5.2rem);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -.045em;
+      background: linear-gradient(112deg, #fff5d5 8%, #ffd277 47%, #fff0bd 72%, #f8b94f 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 19px rgba(255, 189, 89, .26));
+      animation: title-glow 4.8s ease-in-out infinite alternate;
+      overflow-wrap: anywhere;
+    }
+
+    @keyframes title-glow {
+      to { filter: drop-shadow(0 0 27px rgba(255, 189, 89, .48)); }
+    }
+
+    .quote {
+      min-height: 3.7em;
+      margin: clamp(1.45rem, 4vw, 2rem) auto 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 3.65vw, 1.24rem);
+      font-weight: 400;
+      line-height: 1.8;
+      letter-spacing: .012em;
+    }
+
+    .quote-line {
+      display: block;
+      opacity: 0;
+      animation: line-arrive .75s ease-out forwards;
+    }
+    .quote-line:nth-child(2) { animation-delay: .22s; }
+
+    @keyframes line-arrive {
+      from { opacity: 0; transform: translateY(9px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: clamp(1.75rem, 5vw, 2.3rem);
+    }
+
+    button {
+      min-height: 2.9rem;
+      padding: .72rem 1.15rem;
+      border: 1px solid rgba(255, 235, 198, .3);
+      border-radius: 999px;
+      color: var(--cream);
+      font: 600 .91rem/1.2 "DM Sans", "Segoe UI", sans-serif;
+      letter-spacing: .01em;
+      cursor: pointer;
+      transition: transform .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+      touch-action: manipulation;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 231, 183, .6);
+      box-shadow: 0 8px 24px rgba(255, 167, 73, .15);
+    }
+    button:active { transform: translateY(0) scale(.98); }
+    button:focus-visible { outline: 3px solid #ffe6a9; outline-offset: 4px; }
+
+    .share-button {
+      color: #281537;
+      border-color: transparent;
+      background: linear-gradient(110deg, #ffe6a2, #ffc66a);
+    }
+    .share-button:hover { background: linear-gradient(110deg, #fff0bd, #ffd383); }
+
+    .firework-button {
+      background: rgba(255, 255, 255, .075);
+    }
+    .firework-button:hover { background: rgba(255, 255, 255, .14); }
+
+    footer {
+      margin-top: clamp(1.8rem, 5vw, 2.65rem);
+      color: rgba(255, 243, 224, .73);
+      font-size: clamp(.78rem, 2.8vw, .9rem);
+      letter-spacing: .025em;
+    }
+
+    #toast {
+      position: fixed;
+      z-index: 3;
+      left: 50%;
+      bottom: max(1.4rem, env(safe-area-inset-bottom));
+      max-width: calc(100vw - 2rem);
+      padding: .75rem 1.1rem;
+      transform: translate(-50%, 12px);
+      border: 1px solid rgba(255, 240, 216, .2);
+      border-radius: 999px;
+      background: rgba(34, 20, 49, .94);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .25);
+      color: var(--cream);
+      font-size: .9rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    #toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 360px) {
+      main { padding-inline: max(.85rem, env(safe-area-inset-left)); }
+      .wish-card { padding-inline: 1.1rem; }
+      .actions { gap: .55rem; }
+      button { padding-inline: .92rem; font-size: .85rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="scene" aria-hidden="true"></div>
+  <div id="fallback-sky" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <main>
+    <article class="wish-card" aria-labelledby="headline">
+      <span class="lamp-accent" aria-hidden="true">🪔</span>
+      <h1 id="headline">Happy Diwali</h1>
+      <p class="quote" id="quote" aria-live="polite" aria-atomic="true"></p>
+      <div class="actions">
+        <button class="share-button" id="share-button" type="button">Share Wishes</button>
+        <button class="firework-button" id="firework-button" type="button">🎆 Fireworks</button>
+      </div>
+      <footer>Wishing you light, love and prosperity ✨</footer>
+    </article>
+  </main>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      // CONFIG
+      const CONFIG = {
+        desktopEmbers: 3000,
+        mobileEmbers: 1200,
+        desktopBokeh: 48,
+        mobileBokeh: 24,
+        diyaCount: 9,
+        desktopBurstParticles: 125,
+        mobileBurstParticles: 75,
+        autoFireworkMinMs: 4800,
+        autoFireworkMaxMs: 8200,
+        reducedFireworkMinMs: 10000,
+        reducedFireworkMaxMs: 16000
+      };
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const isMobile = window.matchMedia("(max-width: 700px)").matches || "ontouchstart" in window;
+      const sceneHost = document.getElementById("scene");
+      const fallbackSky = document.getElementById("fallback-sky");
+      const random = (min, max) => min + Math.random() * (max - min);
+
+      // QUOTES: each wish is exactly two original lines.
+      const QUOTES = [
+        ["May every little lamp brighten your way.", "May every kind heart brighten your home."],
+        ["Let hope shine a little brighter tonight.", "Let joy stay a little longer tomorrow."],
+        ["May your home be full of laughter.", "May your days be full of light."],
+        ["A new beginning glows in every flame.", "May yours bring joy, peace, and promise."],
+        ["May good things find their way to you.", "May you find good in every day."],
+        ["Share a little light wherever you go.", "It always finds its way back home."],
+        ["May this season bring gentle beginnings.", "And many moments worth celebrating."],
+        ["May your table welcome your favorite people.", "May your heart welcome new hopes."],
+        ["Let kindness be the brightest light.", "Let gratitude make it shine all year."],
+        ["May every corner hold a happy memory.", "May every morning bring a fresh one."],
+        ["Wishing you warm lights and warmer company.", "Wishing you a season of easy smiles."],
+        ["May your dreams find room to grow.", "May joy find you wherever you are."],
+        ["A brighter day begins with a little hope.", "May hope visit you often this Diwali."],
+        ["May love fill the spaces between us.", "May light lead us back together."],
+        ["May each diya bring a moment of peace.", "May each moment become a reason to smile."],
+        ["May prosperity grow from generous hearts.", "May happiness grow in the little things."],
+        ["Let old worries fade into the night.", "Let new hopes rise with the morning."],
+        ["May your home glow with good cheer.", "May the year ahead bring reasons to celebrate."],
+        ["May family bring comfort to your days.", "May friendship bring sparkle to your nights."],
+        ["Keep a little wonder in your heart.", "Keep a little light on for someone else."],
+        ["May your path be bright and steady.", "May your next chapter be kind and joyful."],
+        ["May laughter ring through every room.", "May peace settle gently in every heart."],
+        ["Give thanks for the light around you.", "Give love to the people beside you."],
+        ["May your hard work bloom into abundance.", "May your kindness bloom into connection."],
+        ["A small flame can warm a whole home.", "A small kindness can lift a whole day."],
+        ["May tonight sparkle with happy surprises.", "May tomorrow open with gentle possibilities."],
+        ["Wishing you courage for fresh starts.", "And joy in all the steps that follow."],
+        ["May every wish carry a little hope.", "May every hope find a place to grow."],
+        ["Bring light to the places you gather.", "Bring love to the moments you share."],
+        ["May your days feel bright and unhurried.", "May your nights feel peaceful and warm."],
+        ["Here is to new hopes and old friends.", "Here is to making more memories together."],
+        ["May goodness find you in ordinary moments.", "May wonder find you in unexpected places."],
+        ["Wishing you a home full of warmth.", "Wishing you a year full of possibility."],
+        ["May each new day bring fresh courage.", "May each kind word bring someone comfort."],
+        ["Let the glow of Diwali stay with you.", "Let its warmth travel everywhere you go."],
+        ["May your hopes rise high and bright.", "May your roots stay close to love."],
+        ["May joy light up your celebrations.", "May peace follow you home."],
+        ["May there be sweetness in your conversations.", "And sunshine in the plans you make."],
+        ["A season of light is a season of hope.", "May both shine brightly in your life."],
+        ["May you find abundance in what matters.", "May you share it with a happy heart."],
+        ["Let this festival open a bright door.", "Step through it with hope and kindness."],
+        ["May the people you love feel near.", "May the good ahead feel within reach."],
+        ["May your spirit glow with gratitude.", "May your days glow with possibility."],
+        ["Fill your home with light and welcome.", "Fill your year with joy and purpose."],
+        ["May every reunion feel like a blessing.", "May every goodbye leave room for hello."],
+        ["Wishing you bright ideas and brave dreams.", "Wishing you the joy to make them real."],
+        ["May peace be the gift you keep.", "May love be the light you give."],
+        ["Let every glowing diya remind you:", "There is always a reason to hope."],
+        ["May your celebrations be simple and sweet.", "May your happiness be generous and lasting."]
+      ];
+
+      // UI LOGIC
+      const quoteElement = document.getElementById("quote");
+      const headline = document.getElementById("headline");
+      const toast = document.getElementById("toast");
+      let toastTimer;
+      const selectedQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+      selectedQuote.forEach((line) => {
+        const span = document.createElement("span");
+        span.className = "quote-line";
+        span.textContent = line;
+        quoteElement.appendChild(span);
+      });
+
+      const recipient = new URLSearchParams(window.location.search).get("to");
+      if (recipient) {
+        const safeRecipient = recipient.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 48);
+        if (safeRecipient) headline.textContent = `Happy Diwali, ${safeRecipient}`;
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("visible");
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 2300);
+      }
+
+      async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return;
+        }
+        const temporary = document.createElement("textarea");
+        temporary.value = text;
+        temporary.setAttribute("readonly", "");
+        temporary.style.position = "fixed";
+        temporary.style.opacity = "0";
+        document.body.appendChild(temporary);
+        temporary.select();
+        const copied = document.execCommand("copy");
+        temporary.remove();
+        if (!copied) throw new Error("Clipboard access is unavailable.");
+      }
+
+      document.getElementById("share-button").addEventListener("click", async () => {
+        const message = `${headline.textContent}\n${selectedQuote.join("\n")}\n${window.location.href}`;
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: headline.textContent, text: selectedQuote.join("\n"), url: window.location.href });
+            return;
+          } catch (error) {
+            if (error && error.name === "AbortError") return;
+          }
+        }
+        try {
+          await copyText(message);
+          showToast("Copied!");
+        } catch {
+          showToast("Could not copy. Please try sharing again.");
+        }
+      });
+
+      // FALLBACK SKY: used if Three.js is unavailable or WebGL cannot be created.
+      function enableFallback() {
+        sceneHost.style.display = "none";
+        fallbackSky.classList.add("active");
+        if (fallbackSky.childElementCount) return;
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < 48; i += 1) {
+          const dot = document.createElement("i");
+          dot.className = "fallback-dot";
+          dot.style.setProperty("--dot-x", `${Math.random() * 100}%`);
+          dot.style.setProperty("--dot-y", `${Math.random() * 100}%`);
+          dot.style.setProperty("--dot-size", `${random(1.5, 4)}px`);
+          dot.style.setProperty("--dot-speed", `${random(1.2, 3.4)}s`);
+          dot.style.setProperty("--dot-delay", `${random(-3, 0)}s`);
+          fragment.appendChild(dot);
+        }
+        fallbackSky.appendChild(fragment);
+      }
+
+      // THREE.JS SCENE SETUP
+      let renderer;
+      let camera;
+      let scene;
+      let embers;
+      let bokeh;
+      let diyaEntries = [];
+      let fireworkBursts = [];
+      let animationFrame = 0;
+      let animateScene;
+      let previousTime = 0;
+      let elapsed = 0;
+      let nextAutomaticFirework = 0;
+      let pointerX = 0;
+      let pointerY = 0;
+      let targetX = 0;
+      let targetY = 0;
+      let sceneReady = false;
+
+      function makeGlowMaterial(color, size, opacity) {
+        return new THREE.ShaderMaterial({
+          uniforms: { uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity } },
+          vertexShader: `
+            attribute float aSize;
+            uniform float uOpacity;
+            varying float vOpacity;
+            void main() {
+              vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
+              gl_Position = projectionMatrix * viewPosition;
+              gl_PointSize = clamp(aSize * (260.0 / max(1.0, -viewPosition.z)), 1.0, 72.0);
+              vOpacity = uOpacity;
+            }
+          `,
+          fragmentShader: `
+            uniform vec3 uColor;
+            varying float vOpacity;
+            void main() {
+              float d = length(gl_PointCoord - 0.5);
+              float glow = smoothstep(0.5, 0.04, d);
+              float core = smoothstep(0.18, 0.0, d);
+              gl_FragColor = vec4(uColor * (0.72 + core * 0.65), glow * vOpacity);
+            }
+          `,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        });
+      }
+
+      function createSky() {
+        const material = new THREE.ShaderMaterial({
+          uniforms: { uTime: { value: 0 } },
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform float uTime;
+            varying vec2 vUv;
+            void main() {
+              float y = vUv.y;
+              float horizon = smoothstep(0.0, 0.56, y);
+              vec3 night = vec3(0.035, 0.035, 0.14);
+              vec3 purple = vec3(0.19, 0.075, 0.31);
+              vec3 orange = vec3(0.72, 0.20, 0.105);
+              vec3 sky = mix(orange, purple, smoothstep(0.0, 0.52, y));
+              sky = mix(sky, night, smoothstep(0.43, 1.0, y));
+              float glow = exp(-pow((y - (0.13 + sin(uTime * 0.09) * 0.018)) * 5.0, 2.0));
+              float hueShift = 0.5 + 0.5 * sin(uTime * 0.12 + vUv.x * 2.4);
+              sky += vec3(0.13, 0.045, 0.018) * glow * (0.62 + hueShift * 0.38);
+              gl_FragColor = vec4(sky, 1.0);
+            }
+          `,
+          depthWrite: false,
+          depthTest: false
+        });
+        const sky = new THREE.Mesh(new THREE.PlaneGeometry(420, 270), material);
+        sky.position.set(0, 0, -120);
+        sky.frustumCulled = false;
+        scene.add(sky);
+        return material;
+      }
+
+      // PARTICLES
+      function createEmbers() {
+        const count = isMobile ? CONFIG.mobileEmbers : CONFIG.desktopEmbers;
+        const positions = new Float32Array(count * 3);
+        const sizes = new Float32Array(count);
+        const baseY = new Float32Array(count);
+        for (let i = 0; i < count; i += 1) {
+          const index = i * 3;
+          positions[index] = random(-38, 38);
+          positions[index + 1] = random(-18, 20);
+          positions[index + 2] = random(-36, -4);
+          baseY[i] = positions[index + 1];
+          sizes[i] = random(1.2, 5.5);
+        }
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
+        const points = new THREE.Points(geometry, makeGlowMaterial("#ffb44f", 1, .78));
+        points.userData.baseY = baseY;
+        points.frustumCulled = false;
+        scene.add(points);
+        return points;
+      }
+
+      // BOKEH
+      function createBokeh() {
+        const count = isMobile ? CONFIG.mobileBokeh : CONFIG.desktopBokeh;
+        const positions = new Float32Array(count * 3);
+        const sizes = new Float32Array(count);
+        for (let i = 0; i < count; i += 1) {
+          positions[i * 3] = random(-36, 36);
+          positions[i * 3 + 1] = random(-17, 18);
+          positions[i * 3 + 2] = random(-55, -12);
+          sizes[i] = random(12, 42);
+        }
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
+        const points = new THREE.Points(geometry, makeGlowMaterial("#ffbb78", 1, .13));
+        points.frustumCulled = false;
+        scene.add(points);
+        return points;
+      }
+
+      // DIYAS: clay bowls, golden rims, oil, flame meshes, and warm point lights.
+      function createDiyas() {
+        const clay = new THREE.MeshStandardMaterial({ color: 0x9e482b, roughness: .82, metalness: .04 });
+        const rimMaterial = new THREE.MeshStandardMaterial({ color: 0xf2bd69, roughness: .38, metalness: .55 });
+        const oilMaterial = new THREE.MeshStandardMaterial({ color: 0x33172a, roughness: .28, metalness: .22 });
+        const flameMaterial = new THREE.MeshBasicMaterial({ color: 0xffc34d, transparent: true, opacity: .94, side: THREE.DoubleSide });
+        const innerFlameMaterial = new THREE.MeshBasicMaterial({ color: 0xfff0a2, transparent: true, opacity: .82, side: THREE.DoubleSide });
+        const bowlProfile = [
+          new THREE.Vector2(.03, 0), new THREE.Vector2(.19, .035),
+          new THREE.Vector2(.34, .12), new THREE.Vector2(.46, .28),
+          new THREE.Vector2(.42, .34), new THREE.Vector2(.33, .24),
+          new THREE.Vector2(.16, .15), new THREE.Vector2(.03, .14)
+        ];
+        const bowlGeometry = new THREE.LatheGeometry(bowlProfile, 24);
+        const rimGeometry = new THREE.TorusGeometry(.405, .035, 6, 24);
+        const oilGeometry = new THREE.CircleGeometry(.27, 24);
+        const outerFlameGeometry = new THREE.ConeGeometry(.115, .45, 8);
+        const innerFlameGeometry = new THREE.ConeGeometry(.065, .29, 8);
+        const depth = 26;
+        const ringRadiusX = Math.tan(THREE.MathUtils.degToRad(camera.fov * .5)) * depth * camera.aspect * .82;
+        const ringRadiusY = Math.tan(THREE.MathUtils.degToRad(camera.fov * .5)) * depth * .78;
+
+        for (let i = 0; i < CONFIG.diyaCount; i += 1) {
+          const angle = (i / CONFIG.diyaCount) * Math.PI * 2 - Math.PI / 2;
+          const group = new THREE.Group();
+          group.position.set(Math.cos(angle) * ringRadiusX, Math.sin(angle) * ringRadiusY - .15, -depth - (i % 3) * 1.2);
+          group.rotation.z = Math.cos(angle) * -.11;
+
+          const bowl = new THREE.Mesh(bowlGeometry, clay);
+          bowl.scale.set(1, .72, 1);
+          group.add(bowl);
+          const rim = new THREE.Mesh(rimGeometry, rimMaterial);
+          rim.rotation.x = Math.PI / 2;
+          rim.position.y = .235;
+          rim.scale.set(1, .72, 1);
+          group.add(rim);
+          const oil = new THREE.Mesh(oilGeometry, oilMaterial);
+          oil.rotation.x = -Math.PI / 2;
+          oil.position.y = .19;
+          oil.scale.set(.84, .64, 1);
+          group.add(oil);
+
+          const flame = new THREE.Group();
+          const outer = new THREE.Mesh(outerFlameGeometry, flameMaterial);
+          outer.position.y = .56;
+          const inner = new THREE.Mesh(innerFlameGeometry, innerFlameMaterial);
+          inner.position.set(0, .52, .035);
+          flame.add(outer, inner);
+          flame.position.x = .015;
+          group.add(flame);
+
+          const light = new THREE.PointLight(0xffa947, 1.8, 9, 2);
+          light.position.set(0, .62, .2);
+          group.add(light);
+          scene.add(group);
+          diyaEntries.push({ group, flame, light, phase: random(0, Math.PI * 2), baseY: group.position.y });
+        }
+      }
+
+      // FIREWORKS
+      function createFirework(x, y, z) {
+        const count = isMobile ? CONFIG.mobileBurstParticles : CONFIG.desktopBurstParticles;
+        const positions = new Float32Array(count * 3);
+        const previousPositions = new Float32Array(count * 3);
+        const sizes = new Float32Array(count);
+        const colors = new Float32Array(count * 3);
+        const velocities = new Float32Array(count * 3);
+        const palette = [0xffc653, 0xff7048, 0xffe6a1, 0xf68bdb, 0x9be8ff, 0xb9f28c];
+        const color = new THREE.Color(palette[Math.floor(Math.random() * palette.length)]);
+
+        for (let i = 0; i < count; i += 1) {
+          const index = i * 3;
+          const theta = random(0, Math.PI * 2);
+          const phi = Math.acos(random(-1, 1));
+          const speed = random(3.2, 9.5);
+          positions[index] = x;
+          positions[index + 1] = y;
+          positions[index + 2] = z;
+          previousPositions[index] = x;
+          previousPositions[index + 1] = y;
+          previousPositions[index + 2] = z;
+          velocities[index] = Math.sin(phi) * Math.cos(theta) * speed;
+          velocities[index + 1] = Math.cos(phi) * speed;
+          velocities[index + 2] = Math.sin(phi) * Math.sin(theta) * speed;
+          sizes[i] = random(2.2, 5.3);
+          const tint = color.clone().offsetHSL(random(-.045, .045), random(-.05, .08), random(-.08, .1));
+          colors[index] = tint.r;
+          colors[index + 1] = tint.g;
+          colors[index + 2] = tint.b;
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage));
+        geometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
+        geometry.setAttribute("aColor", new THREE.BufferAttribute(colors, 3));
+        const material = new THREE.ShaderMaterial({
+          uniforms: { uOpacity: { value: 1 } },
+          vertexShader: `
+            attribute float aSize;
+            attribute vec3 aColor;
+            varying vec3 vColor;
+            void main() {
+              vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
+              gl_Position = projectionMatrix * viewPosition;
+              gl_PointSize = clamp(aSize * (230.0 / max(1.0, -viewPosition.z)), 1.0, 18.0);
+              vColor = aColor;
+            }
+          `,
+          fragmentShader: `
+            uniform float uOpacity;
+            varying vec3 vColor;
+            void main() {
+              float d = length(gl_PointCoord - 0.5);
+              float glow = smoothstep(0.5, 0.08, d);
+              gl_FragColor = vec4(vColor, glow * uOpacity);
+            }
+          `,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        });
+        const points = new THREE.Points(geometry, material);
+        points.frustumCulled = false;
+        scene.add(points);
+
+        const trailGeometry = new THREE.BufferGeometry();
+        const trailPositions = new Float32Array(count * 6);
+        trailGeometry.setAttribute("position", new THREE.BufferAttribute(trailPositions, 3).setUsage(THREE.DynamicDrawUsage));
+        const trailMaterial = new THREE.LineBasicMaterial({
+          color,
+          transparent: true,
+          opacity: .52,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const trails = new THREE.LineSegments(trailGeometry, trailMaterial);
+        trails.frustumCulled = false;
+        scene.add(trails);
+        fireworkBursts.push({ points, trails, positions, trailPositions, velocities, life: 0, duration: random(1.45, 2.3) });
+      }
+
+      function launchFireworkFromPointer(clientX, clientY) {
+        if (!sceneReady) return;
+        const rect = sceneHost.getBoundingClientRect();
+        const ndcX = (clientX / rect.width) * 2 - 1;
+        const ndcY = -(clientY / rect.height) * 2 + 1;
+        const distance = 24;
+        const halfHeight = Math.tan(THREE.MathUtils.degToRad(camera.fov * .5)) * distance;
+        const halfWidth = halfHeight * camera.aspect;
+        createFirework(ndcX * halfWidth, ndcY * halfHeight, -distance);
+      }
+
+      document.getElementById("firework-button").addEventListener("click", (event) => {
+        if (sceneReady) {
+          const rect = sceneHost.getBoundingClientRect();
+          launchFireworkFromPointer(rect.left + rect.width * .5, rect.top + rect.height * .25);
+        } else {
+          showToast("Enjoy the Diwali sparkle!");
+        }
+      });
+
+      function setupThreeScene() {
+        if (!window.THREE || !THREE.WebGLRenderer) {
+          enableFallback();
+          return;
+        }
+        try {
+          renderer = new THREE.WebGLRenderer({ alpha: false, antialias: !isMobile, powerPreference: "high-performance" });
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.outputEncoding = THREE.sRGBEncoding;
+          renderer.toneMapping = THREE.ACESFilmicToneMapping;
+          renderer.toneMappingExposure = 1.15;
+          sceneHost.appendChild(renderer.domElement);
+          scene = new THREE.Scene();
+          scene.fog = new THREE.FogExp2(0x26143e, .012);
+          camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, .1, 240);
+          camera.position.set(0, 0, 0);
+
+          const skyMaterial = createSky();
+          embers = createEmbers();
+          bokeh = createBokeh();
+          createDiyas();
+          sceneReady = true;
+          sceneHost.addEventListener("webglcontextlost", (event) => {
+            event.preventDefault();
+            sceneReady = false;
+            enableFallback();
+          }, { once: true });
+
+          const scheduleFirework = () => {
+            const min = reducedMotion ? CONFIG.reducedFireworkMinMs : CONFIG.autoFireworkMinMs;
+            const max = reducedMotion ? CONFIG.reducedFireworkMaxMs : CONFIG.autoFireworkMaxMs;
+            nextAutomaticFirework = elapsed + random(min, max) / 1000;
+          };
+          scheduleFirework();
+
+          animateScene = function animate(now) {
+            if (!sceneReady || document.hidden) return;
+            animationFrame = window.requestAnimationFrame(animateScene);
+            const delta = Math.min((now - (previousTime || now)) / 1000, .05);
+            previousTime = now;
+            elapsed += delta * (reducedMotion ? .42 : 1);
+            skyMaterial.uniforms.uTime.value = elapsed;
+
+            const positionAttribute = embers.geometry.attributes.position;
+            const positions = positionAttribute.array;
+            const baseY = embers.userData.baseY;
+            const width = isMobile ? 28 : 42;
+            for (let i = 0; i < baseY.length; i += 1) {
+              const index = i * 3;
+              positions[index + 1] = baseY[i] + ((elapsed * (reducedMotion ? .12 : .3) + i * .013) % 38) - 19
+                + Math.sin(elapsed * .7 + i * .21) * .34;
+              positions[index] += Math.sin(elapsed * .35 + i * .37) * delta * .11;
+              if (positions[index] > width) positions[index] = -width;
+              if (positions[index] < -width) positions[index] = width;
+            }
+            positionAttribute.needsUpdate = true;
+
+            bokeh.rotation.z = Math.sin(elapsed * .08) * .015;
+            bokeh.position.x = Math.sin(elapsed * .11) * .55;
+            diyaEntries.forEach((entry) => {
+              const wave = elapsed * (reducedMotion ? .55 : 1.1) + entry.phase;
+              entry.group.position.y = entry.baseY + Math.sin(wave) * .14;
+              entry.flame.rotation.z = Math.sin(wave * 2.3) * .09;
+              entry.flame.scale.set(1 + Math.sin(wave * 3.1) * .07, 1 + Math.sin(wave * 2.7) * .12, 1);
+              entry.light.intensity = 1.5 + (Math.sin(wave * 4.1) + 1) * .28;
+            });
+
+            if (elapsed >= nextAutomaticFirework) {
+              createFirework(random(-14, 14), random(-1, 10), random(-25, -14));
+              scheduleFirework();
+            }
+
+            for (let i = fireworkBursts.length - 1; i >= 0; i -= 1) {
+              const burst = fireworkBursts[i];
+              burst.life += delta;
+              const opacity = Math.max(0, 1 - burst.life / burst.duration);
+              const pointPositions = burst.positions;
+              for (let j = 0; j < pointPositions.length / 3; j += 1) {
+                const index = j * 3;
+                const trailIndex = j * 6;
+                burst.trailPositions[trailIndex] = pointPositions[index];
+                burst.trailPositions[trailIndex + 1] = pointPositions[index + 1];
+                burst.trailPositions[trailIndex + 2] = pointPositions[index + 2];
+                burst.trailPositions[trailIndex + 3] = pointPositions[index] - burst.velocities[index] * .055;
+                burst.trailPositions[trailIndex + 4] = pointPositions[index + 1] - burst.velocities[index + 1] * .055;
+                burst.trailPositions[trailIndex + 5] = pointPositions[index + 2] - burst.velocities[index + 2] * .055;
+                burst.velocities[index] *= 1 - delta * .42;
+                burst.velocities[index + 1] -= 4.7 * delta;
+                burst.velocities[index + 2] *= 1 - delta * .42;
+                pointPositions[index] += burst.velocities[index] * delta;
+                pointPositions[index + 1] += burst.velocities[index + 1] * delta;
+                pointPositions[index + 2] += burst.velocities[index + 2] * delta;
+              }
+              burst.points.geometry.attributes.position.needsUpdate = true;
+              burst.points.material.uniforms.uOpacity.value = opacity;
+              burst.trails.geometry.attributes.position.needsUpdate = true;
+              burst.trails.material.opacity = opacity * .55;
+              if (opacity <= 0) {
+                scene.remove(burst.points, burst.trails);
+                burst.points.geometry.dispose();
+                burst.points.material.dispose();
+                burst.trails.geometry.dispose();
+                burst.trails.material.dispose();
+                fireworkBursts.splice(i, 1);
+              }
+            }
+
+            targetX += (pointerX - targetX) * .025;
+            targetY += (pointerY - targetY) * .025;
+            const drift = reducedMotion ? .24 : 1;
+            camera.position.x = Math.sin(elapsed * .12) * .45 * drift + targetX * 1.7;
+            camera.position.y = Math.cos(elapsed * .1) * .3 * drift + targetY * 1.2;
+            camera.lookAt(0, 0, -30);
+            renderer.render(scene, camera);
+          }
+
+          animationFrame = window.requestAnimationFrame(animateScene);
+          window.addEventListener("pointermove", (event) => {
+            pointerX = (event.clientX / window.innerWidth - .5) * 2;
+            pointerY = (event.clientY / window.innerHeight - .5) * -2;
+          }, { passive: true });
+          window.addEventListener("deviceorientation", (event) => {
+            if (event.gamma !== null && event.beta !== null) {
+              pointerX = Math.max(-1, Math.min(1, event.gamma / 40));
+              pointerY = Math.max(-1, Math.min(1, (event.beta - 35) / 55));
+            }
+          }, { passive: true });
+          window.addEventListener("pointerdown", (event) => {
+            if (event.target.closest("button")) return;
+            launchFireworkFromPointer(event.clientX, event.clientY);
+          }, { passive: true });
+        } catch {
+          sceneReady = false;
+          enableFallback();
+        }
+      }
+
+      // ANIMATION LOOP LIFECYCLE, RESIZE, AND VISIBILITY
+      function resizeScene() {
+        if (!renderer || !camera) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      window.addEventListener("resize", resizeScene, { passive: true });
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          window.cancelAnimationFrame(animationFrame);
+        } else if (sceneReady) {
+          previousTime = 0;
+          animationFrame = window.requestAnimationFrame(animateScene);
+        }
+      });
+
+      setupThreeScene();
+    })();
+  </script>
+</body>
+</html>
